@@ -35,9 +35,5 @@ Please enter the path of the corresponding checkpoint when running
 python Eva_Model.py --data_name YourData
 ```
 The test results will be saved in `sam_esp_model_result/data_name` folder
-### Demo
-> this is an example
-```plaintext
-python example.py
-```
+
 
