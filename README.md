@@ -35,12 +35,16 @@ python SAMtrain.py --dataname YourData
 ```
 
 ### Evaluation
-Please enter the path of the corresponding checkpoint when running
-
+Please enter the correct path of the corresponding checkpoint when running
+#### evaluate the SAM-ESP model
 ```plaintext
 python Eva_Model.py --data_name YourData
 ```
-The test results will be saved in `{yourcheckpoingfolder/prediction}` folder
+#### evaluate the SAM-finetune model
+```plaintext
+python SAM_eval.py
+```
+The test results will be saved in `{yourcheckpointfolder/prediction}` folder
 
 [//]: # (##Acknowledgments)
 
