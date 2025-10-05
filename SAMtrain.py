@@ -5,6 +5,7 @@ import logging
 import wandb
 import os
 import random
+
 # os.environ["WANDB_MODE"] = "offline"
 # os.environ['CUDA_VISIBLE_DEVICES'] = '3'
 join = os.path.join
@@ -24,7 +25,7 @@ def parse_args():
     parser.add_argument(
         "--checkpoint", type=str, default="parameterfault/sam_vit_b_01ec64.pth"
     )
-    parser.add_argument("--model_name", type=str, default="SAM_fune", help="model (SAM or SAM_ESP)")
+    parser.add_argument("--model_name", type=str, default="SAM_fune", help="model SAM finetune")
     parser.add_argument("--dataname", type=str, default="CASIAiris_data")
     parser.add_argument("--batch_size", type=int, default=1, help="Batch size for training")
     parser.add_argument("--num_epochs", type=int, default=50, help="Number of training epochs")
@@ -35,10 +36,10 @@ def parse_args():
         "--weight_decay", type=float, default=1e-8, help="weight decay (default: 0.01)"
     )
     parser.add_argument(
-        "--lr", type=float, default=0.0001, metavar="LR", help="learning rate (absolute lr)"
+        "--lr", type=float, default=0.00001, metavar="LR", help="learning rate (absolute lr)"
     )
     parser.add_argument(
-        "--seed", type=int, default=0,  help="random seed"
+        "--seed", type=int, default=0, help="random seed"
     )
     return parser.parse_args()
 
@@ -87,7 +88,7 @@ def val(model, val_loader, criterion, calculatedice, device):
         gt2D = gt2D.to(device=device, dtype=torch.float32)
         # with autocast():
 
-        with torch.amp.autocast('cuda'),torch.no_grad():
+        with torch.amp.autocast('cuda'), torch.no_grad():
             outputs = model(image.numpy(), boxes_np)
             loss = criterion(outputs, gt2D)
             dice = calculatedice(outputs, gt2D)
@@ -116,20 +117,21 @@ def setup_logging(log_file='training.log'):
     logger.addHandler(file_handler)
 
     return logger
+
+
 # set random seed
 def set_seed(seed):
     random.seed(seed)
     # np.random.seed(seed)
     torch.manual_seed(seed)
     torch.cuda.manual_seed(seed)
-    # torch.cuda.manual_seed_all(seed)  # if use multi-GPU.
     torch.backends.cudnn.deterministic = True
     torch.backends.cudnn.benchmark = False
 
+
 def main():
     # -------解析命令行参数--------
-    
-    
+
     args = parse_args()
     set_seed(args.seed)
     # 创建记录文件夹
@@ -140,7 +142,7 @@ def main():
     os.makedirs(model_save_path, exist_ok=True)
 
     # -------logging------------
-    logger = setup_logging(os.path.join(model_save_path,'training.log'))
+    logger = setup_logging(os.path.join(model_save_path, 'training.log'))
     logger.info(f'Using device {args.device};epochs {args.num_epochs};lr {args.lr};seed:{args.seed}')
     # set wandb
 
@@ -159,12 +161,12 @@ def main():
 
     # ---------数据-----------
     train_image_path = join('../dataset', args.dataname, 'train', 'image')
-    train_mask_path = join('../dataset', args.dataname, 'train', 'pupil_mask')
+    train_mask_path = join('../dataset', args.dataname, 'train', 'mask')
     val_image_path = join('../dataset', args.dataname, 'val', 'image')
-    val_mask_path = join('../dataset', args.dataname, 'val', 'pupil_mask')
+    val_mask_path = join('../dataset', args.dataname, 'val', 'mask')
     train_dataset = MyDataset(train_image_path, train_mask_path, nflow=False)
     train_loader = DataLoader(train_dataset, batch_size=args.batch_size, shuffle=True, pin_memory=True)
-    # 当pin_memory=True时，数据将被加载到CUDA固定的内存区域中，这样在数据传输到GPU时速度会更快
+
     val_dataset = MyDataset(val_image_path, val_mask_path, nflow=False)
     val_loader = DataLoader(val_dataset, batch_size=args.batch_size, shuffle=False, pin_memory=True)
 
@@ -179,14 +181,13 @@ def main():
     )
     scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, 'min', patience=5,
                                                            factor=0.5)  # goal: min Val Loss
-    # PyTorch中的一个学习率调度器类，用于根据某个指标动态地调整学习率。patience=5：这是一个参数，表示如果在指定的轮数（这里是5个epoch）内被监测的指标没有改善，则会进行学习率的调整
     BEST_SCORE = 0
     # 训练模型
     logger.info(f"begin training {args.model_name} on {args.dataname}")
     # 记录训练开始时间
     begin_time = datetime.datetime.now()
     logger.info(f'Training started at {begin_time.strftime("%Y-%m-%d %H:%M:%S")}')
-    
+
     for epoch in range(args.num_epochs):
         train_loss = train(model, train_loader, optimizer, criterion, args.device)
 
@@ -202,12 +203,12 @@ def main():
         }
         )
         # 保存最新的模型
-        os.makedirs(join(model_save_path, 'parameter'), exist_ok=True)
+        os.makedirs(model_save_path, exist_ok=True)
         # torch.save(model.state_dict(), join(model_save_path, args.dataname, args.model_name + "_latest.pth"))
         if val_score > BEST_SCORE:
             BEST_SCORE = val_score
-            torch.save(model.state_dict(), join(model_save_path, 'parameter', "model_best.pth"))
-            logger.info(f'BEST {epoch+1} saved!')
+            torch.save(model.state_dict(), join(model_save_path, "model_best.pth"))
+            logger.info(f'BEST {epoch + 1} saved!')
 
     end_time = datetime.datetime.now()
     elapsed_time = end_time - begin_time

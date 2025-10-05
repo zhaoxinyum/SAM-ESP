@@ -70,7 +70,6 @@ class ESPmodule(nn.Module):
             # 3.sigmoid
             u = torch.sigmoid((o - self.lam * p.squeeze(dim=1) - Tq.squeeze(dim=1)) / self.entropy_epsilon)
 
-        # 将最后一步未经过sigmoid的值进行输出
         u1 = (o - self.lam * p.squeeze(dim=1) - Tq.squeeze(dim=1)) / self.entropy_epsilon
         return u1
 
@@ -106,8 +105,3 @@ class ESPmodule(nn.Module):
         return ker
 
 
-if __name__ == '__main__':
-    o = torch.randn((5, 1, 32, 32))
-    model = ESPmodule()
-    mask = model(o)
-    print(mask.shape)

@@ -13,7 +13,8 @@ from PIL import Image
 
 
 class MyDataset(Dataset):
-    def __init__(self, image_folder, target_folder, transform=None, bbox_shift=40, eval=False, nflow=False, noise=False, std=20, prob=0.2):
+    def __init__(self, image_folder, target_folder, transform=None, bbox_shift=40, eval=False, nflow=False, noise=False,
+                 std=20, prob=0.2):
         self.image_folder = image_folder
         self.target_folder = target_folder
         self.transform = transform
@@ -22,14 +23,13 @@ class MyDataset(Dataset):
         self.target_files = sorted(os.listdir(target_folder))
         self.bbox_shift = bbox_shift
         self.needflow = nflow
-        #noise parameter
-        #guassian std
+        # noise parameter
+        # guassian std
         self.noise = noise
         self.std = std
-        #salt and pepper probability
+        # salt and pepper probability
         self.prob = prob
         self.eval = eval
-
 
     def __len__(self):
         return len(self.image_files)
@@ -47,13 +47,13 @@ class MyDataset(Dataset):
     @staticmethod
     def add_image_noise(image, std, prob):
         # 添加高斯噪声
-       # gauss = np.random.normal(0, std, image.shape)
-       # noisy_image = image + gauss
-       # noisy_image = np.clip(noisy_image, 0, 255).astype(np.uint8)
+        # gauss = np.random.normal(0, std, image.shape)
+        # noisy_image = image + gauss
+        # noisy_image = np.clip(noisy_image, 0, 255).astype(np.uint8)
 
         # # 添加椒盐噪声
         noisy_image = image
-        salt_pepper = np.random.choice([0, 1, 2], size=image.shape, p=[1-prob, prob/2, prob/2])
+        salt_pepper = np.random.choice([0, 1, 2], size=image.shape, p=[1 - prob, prob / 2, prob / 2])
         noisy_image[salt_pepper == 1] = 0
         noisy_image[salt_pepper == 2] = 255
 
@@ -112,7 +112,7 @@ class MyDataset(Dataset):
         bounding_box = self.add_noise(H, W, min_x, min_y, max_x, max_y)
         # output:image:ndarray (H,W,3); mask:tensor(H,W);bounding_box:np (4)
         if self.eval:
-            image_basename = os.path.basename(image_path)  
+            image_basename = os.path.basename(image_path)
             image_name = os.path.splitext(image_basename)[0]
             return image, torch.FloatTensor(target), bounding_box, image_name
         if self.needflow:
@@ -122,23 +122,4 @@ class MyDataset(Dataset):
             return image, torch.FloatTensor(target), bounding_box
 
 
-if __name__ == '__main__':
-    train_imagedata_path = 'dataset/ACDC_data/small-test/image'
-    train_maskdata_path = "dataset/ACDC_data/small-test/mask"
-    random.seed(1)
-    test_dataset = MyDataset(train_imagedata_path, train_maskdata_path)
-    test_loader = DataLoader(test_dataset, batch_size=1, shuffle=False, pin_memory=True)
-    gtoutput_folder = 'acdc_part_gt'
-    output_folder = 'acdc_part'
-    os.makedirs(gtoutput_folder, exist_ok=True)
-    os.makedirs(output_folder, exist_ok=True)
-    for i, (image, gt2D, boxes) in enumerate(test_loader):
-        # 创建 PIL 图像对象
-        gt2D = gt2D.squeeze(0)
-        image = image.squeeze(0)
-        gt = gt2D.mul(255).byte().cpu().numpy()
-        imagegt = Image.fromarray(gt, mode='L')
-        file_name = f"{i + 1}_prediction.png"
-        imagegt.save(join(gtoutput_folder, file_name))
-        cv2.imwrite(join(output_folder, file_name), image.numpy())
-    print('finish')
+

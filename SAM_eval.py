@@ -58,7 +58,7 @@ def main():
     os.makedirs(masks_folder, exist_ok=True)
     logger = setup_logging(log_file=join(output_folder, 'evaluation.log'))
 
-    checkpoint = os.path.join(args.checkpoint_folder, 'parameter/model_best.pth')
+    checkpoint = os.path.join(args.checkpoint_folder, 'model_best.pth')
     logger.info(f'Using device {args.device}')
     logger.info(f"checkpoint:{checkpoint}")
     # ----model-------

@@ -1,3 +1,4 @@
+# This code is for SAM-ESP training
 import argparse
 import torch
 import torch.nn as nn
@@ -30,7 +31,7 @@ def parse_args():
     parser.add_argument("--dataname", type=str, default="CASIAiris_data",
                         help="(CASIAiris_data) or (ACDC_data) or (DTUHerlev_data) or (Refuge_data) ")
     parser.add_argument("--batch_size", type=int, default=1, help="Batch size for training")
-    parser.add_argument("--num_epochs", type=int, default=40, help="Number of training epochs")
+    parser.add_argument("--num_epochs", type=int, default=50, help="Number of training epochs")
     parser.add_argument("--device", type=str, default="cuda" if torch.cuda.is_available() else "cpu",
                         help="Device (cuda or cpu)")
     # Optimizer parameters
@@ -53,7 +54,6 @@ def set_seed(seed):
     # np.random.seed(seed)
     torch.manual_seed(seed)
     torch.cuda.manual_seed(seed)
-    # torch.cuda.manual_seed_all(seed)  # if use multi-GPU.
     torch.backends.cudnn.deterministic = True
     torch.backends.cudnn.benchmark = False
 
@@ -76,7 +76,6 @@ def train(model, train_loader, optimizer, criterion, device):
             scaler = torch.amp.GradScaler()
 
             with torch.amp.autocast('cuda'):
-                # with autocast():
                 output = model(image.numpy(), boxes_np)
                 loss = criterion(output, gt2D)
 

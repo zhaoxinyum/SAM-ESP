@@ -12,6 +12,7 @@ from copy import deepcopy
 # from esp_module import *
 import torch.nn.functional as F
 
+
 class SAM(nn.Module):
     def __init__(
             self,
@@ -52,7 +53,7 @@ class SAM(nn.Module):
         """
         # 保持横纵比放缩至1024尺度
         target_size = self.get_preprocess_shape(image.shape[1], image.shape[2], self.image_encoder.img_size)
-        image_scale =[]
+        image_scale = []
         for i in range(image.shape[0]):
             # 获取单张图片scaling后的结果
             img_sample = np.array(resize(to_pil_image(image[i]), target_size))
@@ -147,41 +148,7 @@ class SAM(nn.Module):
             multimask_output=False,
         )
         o = self.postprocess_masks(low_res_masks, self.image_scale_size, self.orgin_size)
-        #（B, 1, H, W）
+        # （B, 1, H, W）
         return o.squeeze(1)
 
-if __name__ =='__main__':
-    criterion = nn.BCEWithLogitsLoss(reduction="mean")
-    path = "parameterfault/sam_vit_b_01ec64.pth"
-    sam_model = sam_model_registry['vit_b'](checkpoint=path)
-    model = SAM(
-        image_encoder=sam_model.image_encoder,
-        mask_decoder=sam_model.mask_decoder,
-        prompt_encoder=sam_model.prompt_encoder,
-        device="cpu"
-    )
-    train_imagedata_path = 'dataset/Refuge_data/train_local/image'
-    train_maskdata_path = "dataset/Refuge_data/train_local/Disc_mask"
-    train_dataset = MyDataset(train_imagedata_path, train_maskdata_path)
-    image, gt2D, bbox = train_dataset[0]
-    min_x, min_y, max_x, max_y = bbox[0], bbox[1], bbox[2], bbox[3]
-    image1 = np.expand_dims(image, axis=0)
-    o, masks = model(image1, bbox)
-    o_loss = criterion(o, gt2D.unsqueeze(0))
-    mask_loss = criterion(masks, gt2D.unsqueeze(0))
-    print(f"o_loss:{o_loss},mask_loss:{mask_loss}")
-    sam_masks = torch.where(o > 0, torch.tensor(1), torch.tensor(0))
-    mask = torch.where(masks > 0, torch.tensor(1), torch.tensor(0))
-    # sam_dice_value = dice(sam_masks, gt2D.unsqueeze(0).long())
-    # esp_dice_value = dice(mask, gt2D.unsqueeze(0).long())
-    # print(f"o_dice:{sam_dice_value},mask_dice:{esp_dice_value}")
-    # plt.subplot(1, 4, 1)
-    # plt.imshow(sam_masks.squeeze(0))
-    # plt.subplot(1, 4, 2)
-    # plt.imshow(mask.squeeze(0))
-    # plt.subplot(1, 4, 3)
-    # plt.imshow(gt2D.numpy())
-    # plt.subplot(1, 4, 4)
-    # plt.imshow(image)
-    # plt.plot([min_x, max_x, max_x, min_x, min_x], [min_y, min_y, max_y, max_y, min_y], color='red')
-    # plt.show()
+
