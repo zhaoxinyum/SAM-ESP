@@ -21,19 +21,29 @@ cd SAM-ESP
 pip install -r requirements.txt
 ```
 ### Code Introduction
-The code of the SAM-ESP (SAM added the elliptical shape constraint module) is : `SAM_ESP.py`
+The code of the SAM-ESP (SAM added the elliptical shape constraint module) structure is : `SAM_ESP.py`
 The code of the esp module is:`esp_module.py`
 
-###Training
+###Training 
+#### training the SAM-ESP model
 ```plaintext
 python train.py --dataname YourData 
 ```
-## Evaluation
+#### finetune the SAM
+```plaintext
+python SAMtrain.py --dataname YourData
+```
+
+### Evaluation
 Please enter the path of the corresponding checkpoint when running
 
 ```plaintext
 python Eva_Model.py --data_name YourData
 ```
-The test results will be saved in `sam_esp_model_result/data_name` folder
+The test results will be saved in `{yourcheckpoingfolder/prediction}` folder
 
+[//]: # (##Acknowledgments)
 
+[//]: # (This repository is built upon ideas and implementations inspired by the paper "Contour flow constraint: Preserving)
+
+[//]: # (global shape similarity for deep learning-based image segmentation". I would like to thank the authors)
